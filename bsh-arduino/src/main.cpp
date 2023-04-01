@@ -35,6 +35,11 @@ const byte ROWS = 4;
 const byte COLUMNS = 4;
 
 ColorType channels[ROWS][COLUMNS];
+struct Color {
+  size_t red;
+  size_t green;
+  size_t blue;
+};
 
 void command(RowSelection selection, CommandType command_type, byte value) {
   Wire.beginTransmission(selection);
@@ -63,6 +68,7 @@ void init_transfer() {
   Serial.println("Arduino initialized");
 }
 
+// DEVICE_TOGGLE has to be enabled for CHANNEL_XX_TOGGLE to work 
 void init_led() {
   command(RowSelection::ALL, CommandType::DEVICE_TOGGLE, TRUE);
   command(RowSelection::ALL, CommandType::CHANNEL_LOW_TOGGLE, FALSE);
@@ -151,5 +157,26 @@ void setup() {
   init_channels();
 }
 
+const size_t INCREMENT = 100;
+const size_t COLOR_MAX = 8192; // 2^13
+
+size_t color[3] = { 0, 0, 0 };
+int increment_index = 2;
+
 void loop() {
+  color_led(0, 0, color[0], color[1], color[2]);
+
+  size_t original = color[increment_index];
+  size_t updated = (original + INCREMENT) % COLOR_MAX;
+  color[increment_index] = updated;
+
+  if (updated < original) {
+    if (increment_index == 0) {
+      increment_index = 2;
+    } else {
+      increment_index--;
+    }
+  }
+
+  delay(100);
 }
