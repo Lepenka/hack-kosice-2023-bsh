@@ -100,7 +100,7 @@ ColorType diff_color_types(ColorType source, ColorType removal) {
   return (ColorType)result;
 }
 
-void clear_led(byte x, byte y, ColorType color_type) {
+void reset_led(byte x, byte y, ColorType color_type) {
   RowSelection row = get_row(x);
 
   ColorType old_color = channels[x][y];
@@ -122,7 +122,7 @@ void clear_led(byte x, byte y, ColorType color_type) {
   command(row, CommandType::CHANNEL_LOW_TOGGLE, low);
 }
 
-void toggle_led(byte x, byte y, size_t r, size_t g, size_t b) {
+void set_led(byte x, byte y, size_t r, size_t g, size_t b) {
   ColorType color_type = get_color_type(r, g, b);
   RowSelection row = get_row(x);
 
@@ -134,15 +134,6 @@ void toggle_led(byte x, byte y, size_t r, size_t g, size_t b) {
   command(row, CommandType::CHANNEL_LOW_TOGGLE, low);
 
   channels[x][y] = color_type;
-}
-
-// byte get_pattern(byte x, byte y) {
-
-// }
-
-void color_led(byte x, byte y, size_t r, size_t g, size_t b) {
-  toggle_led(x, y, r, g, b);
-  //dim_led(x, y, r, g, b);
 }
 
 void setup() {
