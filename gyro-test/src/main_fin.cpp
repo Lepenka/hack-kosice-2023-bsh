@@ -21,14 +21,14 @@ void PoolSensorValues() {
     AccGyr.Get_G_Axes(gyroscope);
 
 
-    //SerialPort.print(" | Acc[mg]: ");
-    //SerialPort.print(accelerometer[0]);
-    //SerialPort.print(" ");
-    //SerialPort.print(accelerometer[1]);
-    //SerialPort.print(" ");
-    //SerialPort.print(accelerometer[2]);
+    SerialPort.print(" | Acc[mg]: ");
+    SerialPort.print(accelerometer[0]);
+    SerialPort.print(" ");
+    SerialPort.print(accelerometer[1]);
+    SerialPort.print(" ");
+    SerialPort.print(accelerometer[2]);
 
-
+    
     double var = sqrt(gyroscope[0] * gyroscope[0] + gyroscope[1] * gyroscope[1] + gyroscope[2] * gyroscope[2]);
     if(var > 30000){
       trial++;
