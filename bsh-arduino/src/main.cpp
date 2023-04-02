@@ -35,11 +35,27 @@ const byte ROWS = 4;
 const byte COLUMNS = 4;
 
 ColorType channels[ROWS][COLUMNS];
+
 struct Color {
   size_t red;
   size_t green;
   size_t blue;
 };
+
+int row_to_index(RowSelection row) {
+  switch (row) {
+    case RowSelection::FIRST:
+      return 0;
+    case RowSelection::SECOND:
+      return 1;
+    case RowSelection::THIRD:
+      return 2;
+    case RowSelection::FOURTH:
+      return 3;
+    case RowSelection::ALL:
+      return -1;
+  };
+}
 
 void command(RowSelection selection, CommandType command_type, byte value) {
   Wire.beginTransmission(selection);
@@ -157,26 +173,119 @@ void setup() {
   init_channels();
 }
 
-const size_t INCREMENT = 100;
+const size_t TICK_LENGTH = 10; // millis?
+const size_t LOOP_LENGTH = 50000;
+const size_t LOOP_LENGTH_TICKS = LOOP_LENGTH / TICK_LENGTH;
+
 const size_t COLOR_MAX = 8192; // 2^13
+const size_t TICKS_PER_COLOR = COLOR_MAX / TICK_LENGTH;
+const size_t INCREMENT = 1000;//LOOP_LENGTH_TICKS / (TICKS_PER_COLOR * TICKS_PER_COLOR * TICKS_PER_COLOR);
 
-size_t color[3] = { 0, 0, 0 };
-int increment_index = 2;
+// ---------------- Challenge 1 --------------------------
+bool increment_color_channel(size_t* value) {
+  size_t original = *value;
+  *value = (original + INCREMENT) % COLOR_MAX;
 
-void loop() {
-  color_led(0, 0, color[0], color[1], color[2]);
+  bool overflow = (*value) < original;
+  return overflow;
+}
 
-  size_t original = color[increment_index];
-  size_t updated = (original + INCREMENT) % COLOR_MAX;
-  color[increment_index] = updated;
+Color color = { 0, 0, 0 };
 
-  if (updated < original) {
-    if (increment_index == 0) {
-      increment_index = 2;
-    } else {
-      increment_index--;
+void all_leds_smooth_transition() {
+  color_led(0, 0, color.red, color.green, color.blue); // TODO: color all leds
+
+  bool update_green = increment_color_channel(&color.blue);
+  if (update_green) {
+    bool update_red = increment_color_channel(&color.green);
+    if (update_red) {
+      increment_color_channel(&color.red);
     }
   }
+} 
+// ------------------------------------------------------
 
-  delay(100);
+Color row_colors[4] = { {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} };
+
+void color_row(RowSelection row, size_t r, size_t g, size_t b) {
+  ColorType color_type = get_color_type(r, g, b);
+
+  byte low = 0x00;
+  low = color_type | low;
+  low = (color_type << 3) | low;
+  byte payload = 0xFF;
+  
+  command(row, CommandType::CHANNEL_HIGH_TOGGLE, payload);
+  command(row, CommandType::CHANNEL_LOW_TOGGLE, payload);
+
+}
+
+// ------------------------ Challenge 2 --------------------
+void falling_rows() {
+  auto color = row_colors[0];
+  color_row(RowSelection::FIRST, color.red, color.green, color.blue);
+  color = row_colors[1];
+  color_row(RowSelection::SECOND, color.red, color.green, color.blue);
+  color = row_colors[2];
+  color_row(RowSelection::THIRD, color.red, color.green, color.blue);
+  color = row_colors[3];
+  color_row(RowSelection::FOURTH, color.red, color.green, color.blue);
+
+  row_colors[3] = row_colors[2];
+  row_colors[2] = row_colors[1];
+  row_colors[1] = row_colors[0];
+  bool update_green = increment_color_channel(&row_colors[0].blue);
+  if (update_green) {
+    bool update_red = increment_color_channel(&row_colors[0].green);
+    if (update_red) {
+      increment_color_channel(&row_colors[0].red);
+    }
+  }
+} 
+
+Color letter_color = {5000, 3000, 3000};
+const bool BSH_LETTERS[14][4] = {
+  // b
+  {true, false, false, false},
+  {true, true, true, true},
+  {true, false, false, true},
+  {true, true, true, true},
+  
+  {false, false, false, false},
+
+  // s
+  {false, true, true, true},
+  {true, false, false, false},
+  {false, false, false, true},
+  {true, true, true, false},
+
+  {false, false, false, false},
+
+  // h
+  {true, false, false, true},
+  {true, true, true, true},
+  {true, false, false, true},
+  {true, false, false, true},
+};
+
+bool letter_cells[ROWS][COLUMNS] = {
+  {false, false, false, false},
+  {false, false, false, false},
+  {false, false, false, false},
+  {false, false, false, false},
+};
+
+void falling_letters() {
+  for (int x = 0; x < ROWS; x++) {
+    for (int y = 0; y < COLUMNS; y++) {
+      // TODO
+    }
+  }
+}
+// ----------------------------------------------------------------------
+
+void loop() {
+  falling_rows();
+
+  //delay(100);
 }
